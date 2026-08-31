@@ -36,6 +36,8 @@ export function Game() {
           startGame()
         } else if (gameState === 'playing') {
           gameRef.current.birdVelocity = FLAP_STRENGTH
+        } else if (gameState === 'gameOver') {
+          restartGame()
         }
       }
     }
@@ -76,11 +78,20 @@ export function Game() {
     startGame()
   }
 
-  // Game loop
+  // Game loop with rendering
   useEffect(() => {
     if (gameState !== 'playing') return
 
-    const gameLoop = setInterval(() => {
+    let animationId
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    let gameRunning = true
+
+    const gameLoop = () => {
+      if (!gameRunning) return
+
       const game = gameRef.current
 
       // Update bird physics
@@ -89,6 +100,7 @@ export function Game() {
 
       // Boundary check
       if (game.birdY - BIRD_SIZE / 2 < 0 || game.birdY + BIRD_SIZE / 2 > CANVAS_HEIGHT) {
+        gameRunning = false
         endGame()
         return
       }
@@ -122,6 +134,7 @@ export function Game() {
           birdLeft < pipeRight &&
           (birdTop < gapTop || birdBottom > gapBottom)
         ) {
+          gameRunning = false
           endGame()
         }
       })
@@ -135,10 +148,58 @@ export function Game() {
           gapY,
         })
       }
-    }, 1000 / 60) // 60 FPS
 
-    return () => clearInterval(gameLoop)
-  }, [gameState])
+      // Render frame
+      // Clear canvas
+      ctx.fillStyle = '#87CEEB'
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+
+      // Draw ground
+      ctx.fillStyle = '#8B7355'
+      ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 60)
+
+      // Draw grass line
+      ctx.fillStyle = '#228B22'
+      ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 8)
+
+      // Draw pipes
+      ctx.fillStyle = '#228B22'
+      game.pipes.forEach((pipe) => {
+        // Top pipe
+        ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapY)
+        // Bottom pipe
+        ctx.fillRect(pipe.x, pipe.gapY + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapY - PIPE_GAP - 60)
+      })
+
+      // Draw bird
+      ctx.fillStyle = '#FFD700'
+      ctx.beginPath()
+      ctx.arc(CANVAS_WIDTH / 2, game.birdY, BIRD_SIZE / 2, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Draw bird eye
+      ctx.fillStyle = '#000'
+      ctx.beginPath()
+      ctx.arc(CANVAS_WIDTH / 2 + 7, game.birdY - 5, 4, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Draw UI
+      ctx.fillStyle = '#000'
+      ctx.font = 'bold 24px Arial'
+      ctx.textAlign = 'left'
+      ctx.fillText(`Score: ${game.score}`, 20, 40)
+      ctx.fillText(`High Score: ${highScore}`, 20, 75)
+
+      animationId = requestAnimationFrame(gameLoop)
+    }
+
+    animationId = requestAnimationFrame(gameLoop)
+
+    return () => {
+      gameRunning = false
+      cancelAnimationFrame(animationId)
+    }
+  }, [gameState, highScore])
 
   const endGame = () => {
     setGameState('gameOver')
@@ -148,54 +209,39 @@ export function Game() {
     }
   }
 
-  // Render game
+  // Render start and game over screens
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas || gameState === 'playing') return
 
     const ctx = canvas.getContext('2d')
 
-    // Clear canvas
-    ctx.fillStyle = '#87CEEB'
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
-
-    // Draw ground
-    ctx.fillStyle = '#8B7355'
-    ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 60)
-
-    // Draw grass line
-    ctx.fillStyle = '#228B22'
-    ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 8)
-
-    // Draw pipes
-    ctx.fillStyle = '#228B22'
-    gameRef.current.pipes.forEach((pipe) => {
-      // Top pipe
-      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapY)
-      // Bottom pipe
-      ctx.fillRect(pipe.x, pipe.gapY + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapY - PIPE_GAP - 60)
-    })
-
-    // Draw bird
-    ctx.fillStyle = '#FFD700'
-    ctx.beginPath()
-    ctx.arc(CANVAS_WIDTH / 2, gameRef.current.birdY, BIRD_SIZE / 2, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Draw bird eye
-    ctx.fillStyle = '#000'
-    ctx.beginPath()
-    ctx.arc(CANVAS_WIDTH / 2 + 7, gameRef.current.birdY - 5, 4, 0, Math.PI * 2)
-    ctx.fill()
-
-    // Draw UI
-    ctx.fillStyle = '#000'
-    ctx.font = 'bold 24px Arial'
-    ctx.fillText(`Score: ${score}`, 20, 40)
-    ctx.fillText(`High Score: ${highScore}`, 20, 75)
-
-    // Draw game state messages
     if (gameState === 'start') {
+      // Clear canvas
+      ctx.fillStyle = '#87CEEB'
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+
+      // Draw ground
+      ctx.fillStyle = '#8B7355'
+      ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 60)
+
+      // Draw grass line
+      ctx.fillStyle = '#228B22'
+      ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 8)
+
+      // Draw bird at start position
+      ctx.fillStyle = '#FFD700'
+      ctx.beginPath()
+      ctx.arc(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BIRD_SIZE / 2, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Draw bird eye
+      ctx.fillStyle = '#000'
+      ctx.beginPath()
+      ctx.arc(CANVAS_WIDTH / 2 + 7, CANVAS_HEIGHT / 2 - 5, 4, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Draw start message
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
       ctx.fillStyle = '#FFF'
@@ -205,6 +251,47 @@ export function Game() {
       ctx.font = '24px Arial'
       ctx.fillText('Press SPACE or Click to Start', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 40)
     } else if (gameState === 'gameOver') {
+      // Clear canvas
+      ctx.fillStyle = '#87CEEB'
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+
+      // Draw ground
+      ctx.fillStyle = '#8B7355'
+      ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 60)
+
+      // Draw grass line
+      ctx.fillStyle = '#228B22'
+      ctx.fillRect(0, CANVAS_HEIGHT - 60, CANVAS_WIDTH, 8)
+
+      // Draw pipes at final position
+      ctx.fillStyle = '#228B22'
+      gameRef.current.pipes.forEach((pipe) => {
+        // Top pipe
+        ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapY)
+        // Bottom pipe
+        ctx.fillRect(pipe.x, pipe.gapY + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapY - PIPE_GAP - 60)
+      })
+
+      // Draw bird at final position
+      ctx.fillStyle = '#FFD700'
+      ctx.beginPath()
+      ctx.arc(CANVAS_WIDTH / 2, gameRef.current.birdY, BIRD_SIZE / 2, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Draw bird eye
+      ctx.fillStyle = '#000'
+      ctx.beginPath()
+      ctx.arc(CANVAS_WIDTH / 2 + 7, gameRef.current.birdY - 5, 4, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Draw UI
+      ctx.fillStyle = '#000'
+      ctx.font = 'bold 24px Arial'
+      ctx.textAlign = 'left'
+      ctx.fillText(`Score: ${score}`, 20, 40)
+      ctx.fillText(`High Score: ${highScore}`, 20, 75)
+
+      // Draw game over message
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
       ctx.fillStyle = '#FFF'
