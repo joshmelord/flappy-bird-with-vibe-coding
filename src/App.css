@@ -2,7 +2,6 @@
   position: relative;
   width: 100vw;
   height: 100dvh;
-  min-height: 320px;
   overflow: hidden;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: Arial, sans-serif;
@@ -33,14 +32,18 @@
 }
 
 .game-canvas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   display: block;
-  width: 100vw;
-  height: 100%;
+  width: min(100vw, 133.333dvh);
+  height: min(75vw, 100dvh);
   border: 0;
   border-radius: 0;
   background: #87CEEB;
   cursor: pointer;
   touch-action: manipulation;
+  transform: translate(-50%, -50%);
 }
 
 .game-instructions {
@@ -92,77 +95,25 @@
   }
 }
 
-/* Game Styles */
-.game-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  font-family: 'Arial', sans-serif;
-  gap: 20px;
-}
-
-.game-container h1 {
-  color: white;
-  font-size: 48px;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  animation: bounce 2s infinite;
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.game-canvas {
-  border: 4px solid white;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  background: #87CEEB;
-  cursor: pointer;
-  max-width: 100%;
-  height: auto;
-}
-
-.game-instructions {
-  text-align: center;
-  color: white;
-  font-size: 18px;
-  line-height: 1.6;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 20px 40px;
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
-}
-
-.game-instructions p {
-  margin: 8px 0;
-}
-
-.game-instructions strong {
-  color: #FFD700;
-  font-weight: bold;
-}
-
 @media (max-width: 1024px) {
   .game-container h1 {
+    top: 8px;
     font-size: 36px;
   }
 
-  .game-canvas {
-    max-width: 100%;
+  .game-instructions {
+    padding: 8px 12px;
+    font-size: 16px;
+  }
+}
+
+@media (max-height: 520px) {
+  .game-container h1 {
+    font-size: 28px;
   }
 
   .game-instructions {
-    font-size: 16px;
-    padding: 16px 24px;
+    font-size: 13px;
+    line-height: 1.35;
   }
 }
