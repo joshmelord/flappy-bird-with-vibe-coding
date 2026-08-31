@@ -61,7 +61,7 @@ export function Game() {
     }
   }, [gameState])
 
-  const startGame = () => {
+  function startGame() {
     gameRef.current = {
       birdY: CANVAS_HEIGHT / 2,
       birdVelocity: 0,
@@ -74,7 +74,7 @@ export function Game() {
     setGameState('playing')
   }
 
-  const restartGame = () => {
+  function restartGame() {
     startGame()
   }
 
@@ -201,7 +201,7 @@ export function Game() {
     }
   }, [gameState, highScore])
 
-  const endGame = () => {
+  function endGame() {
     setGameState('gameOver')
     if (gameRef.current.score > highScore) {
       setHighScore(gameRef.current.score)
